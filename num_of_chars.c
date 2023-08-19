@@ -1,38 +1,43 @@
-#include <stdarg.h>
-#include <string.h>
-
+#include "main.h"
+/**
+ * _printf - printf function
+ * @format: const char pointer
+ * Return: b_len
+ */
 int _printf(const char *format, ...)
 {
-    int len = 0;
-    int sum = 0;
-    int i = 0;
-	va_list args;
-    while (format[i] != '\0')
-    {
-        if (format[i] == '%' && (format[i + 1] == 's' || format[i + 1] == 'c'))
-        {
-            len++;
-        }
-        i++;
-    }
+	int (*pfunc)(va_list, flags_t *);
+	const char *p;
+	va_list arguments;
+	flags_t flags = {0, 0, 0};
 
-    va_start(args, format);
+	register int count = 0;
 
-    for (i = 0; i < len; i++)
-    {
-        const char *arg;
-        if (format[i * 2 + 1] == 's')
-        {
-            arg = va_arg(args, const char *);
-        }
-        else if (format[i * 2 + 1] == 'c')
-        {
-            va_arg(args, int);
-            arg = "";
-        }
-        sum += strlen(arg);
-    }
-
-    va_end(args);
-    return sum;
+	va_start(arguments, format);
+	if (!format || (format[0] == '%' && !format[1]))
+		return (-1);
+	if (format[0] == '%' && format[1] == ' ' && !format[2])
+		return (-1);
+	for (p = format; *p; p++)
+	{
+		if (*p == '%')
+		{
+			p++;
+			if (*p == '%')
+			{
+				count += _putchar('%');
+				continue;
+			}
+			while (get_flag(*p, &flags))
+				p++;
+			pfunc = get_print(*p);
+			count += (pfunc)
+				? pfunc(arguments, &flags)
+				: _printf("%%%c", *p);
+		} else
+			count += _putchar(*p);
+	}
+	_putchar(-1);
+	va_end(arguments);
+	return (count);
 }
