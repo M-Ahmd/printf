@@ -1,44 +1,47 @@
-#include <stdio.h>
-#include <stdarg.h>
+#include "main.h"
 
-int _printf(const char *format, ...) {
-    va_list args;
-    va_start(args, format);
+/**
+ * _printf - produces output according to a format
+ * @format: format string containing the characters and the specifiers
+ * Description: this function will call the get_print() function that will
+ * determine which printing function to call depending on the conversion
+ * specifiers contained into fmt
+ * Return: length of the formatted output string
+ */
+int _printf(const char *format, ...)
+{
+	int (*pfunc)(va_list, flags_t *);
+	const char *p;
+	va_list arguments;
+	flags_t flags = {0, 0, 0};
 
-    int count = 0;
-    const char *ptr = format;
+	register int count = 0;
 
-    while (*ptr) {
-        if (*ptr == '%') {
-            ptr++; // Move past the '%'
-            if (*ptr == '\0') {
-                // Trailing '%' character, break the loop
-                break;
-            } else if (*ptr == 'c') {
-                // Handle %c specifier
-                int c = va_arg(args, int);
-                putchar(c);
-                count++;
-            } else if (*ptr == 's') {
-                // Handle %s specifier
-                char *s = va_arg(args, char*);
-                while (*s) {
-                    putchar(*s);
-                    s++;
-                    count++;
-                }
-            } else if (*ptr == '%') {
-                // Handle %% specifier (print '%')
-                putchar('%');
-                count++;
-            }
-        } else {
-            putchar(*ptr);
-            count++;
-        }
-        ptr++;
-    }
-
-    va_end(args);
-    return count;
+	va_start(arguments, format);
+	if (!format || (format[0] == '%' && !format[1]))
+		return (-1);
+	if (format[0] == '%' && format[1] == ' ' && !format[2])
+		return (-1);
+	for (p = format; *p; p++)
+	{
+		if (*p == '%')
+		{
+			p++;
+			if (*p == '%')
+			{
+				count += _putchar('%');
+				continue;
+			}
+			while (get_flag(*p, &flags))
+				p++;
+			pfunc = get_print(*p);
+			count += (pfunc)
+				? pfunc(arguments, &flags)
+				: _printf("%%%c", *p);
+		} else
+			count += _putchar(*p);
+	}
+	_putchar(-1);
+	va_end(arguments);
+	return (count);
 }
